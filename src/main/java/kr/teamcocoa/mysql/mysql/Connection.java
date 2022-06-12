@@ -9,7 +9,7 @@ import java.util.concurrent.Executors;
 
 @Getter
 public class Connection {
-    
+
     private String dbName;
     private java.sql.Connection connection;
     private ExecutorService preventDisconnectTask;
