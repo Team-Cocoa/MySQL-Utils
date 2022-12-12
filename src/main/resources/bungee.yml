@@ -1,0 +1,4 @@
+name: MySQL
+author: fixca
+version: 1.0
+main: kr.teamcocoa.mysql.main.BungeeMySQLBootstrap

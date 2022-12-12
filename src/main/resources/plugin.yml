@@ -1,3 +1,4 @@
 name: MySQL
-main: kr.teamcocoa.mysql.main.MySQL
+main: kr.teamcocoa.mysql.main.BukkitMySQLBootstrap
 version: 1.0
+api-version: 1.13
