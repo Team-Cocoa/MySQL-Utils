@@ -7,6 +7,7 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.text.MessageFormat;
+import java.util.List;
 
 public class MySQL {
 
@@ -87,6 +88,17 @@ public class MySQL {
         }
     }
 
+    public void update(String query, PlaceHolder placeholders) {
+        if(isConnected()) {
+            try(PreparedStatement preparedStatement = getPreparedStatement(query, placeholders)) {
+                preparedStatement.execute();
+            }
+            catch(SQLException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
     public PreparedStatement getPreparedStatement(String query) {
         if(isConnected()) {
             try {
@@ -105,6 +117,23 @@ public class MySQL {
                 PreparedStatement preparedStatement = connection.prepareStatement(query);
                 for (int i = 0; i < placeholders.length; i++) {
                     preparedStatement.setObject(i + 1, placeholders[i]);
+                }
+                return preparedStatement;
+            }
+            catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+        return null;
+    }
+
+    public PreparedStatement getPreparedStatement(String query, PlaceHolder placeholders) {
+        if(isConnected()) {
+            try {
+                PreparedStatement preparedStatement = connection.prepareStatement(query);
+                List<Object> placeholderList = placeholders.getPlaceholders();
+                for (int i = 0; i < placeholderList.size(); i++) {
+                    preparedStatement.setObject(i + 1, placeholderList.get(i));
                 }
                 return preparedStatement;
             }

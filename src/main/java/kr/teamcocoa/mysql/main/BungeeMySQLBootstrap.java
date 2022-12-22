@@ -1,15 +1,13 @@
 package kr.teamcocoa.mysql.main;
 
 import kr.teamcocoa.mysql.mysql.MySQLManager;
+import lombok.Getter;
 import net.md_5.bungee.api.plugin.Plugin;
 
 public class BungeeMySQLBootstrap extends Plugin {
 
+    @Getter
     private static BungeeMySQLBootstrap instance;
-
-    public static BungeeMySQLBootstrap getInstance() {
-        return instance;
-    }
 
     @Override
     public void onLoad() {
