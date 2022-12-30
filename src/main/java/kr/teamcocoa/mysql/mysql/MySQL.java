@@ -1,5 +1,6 @@
 package kr.teamcocoa.mysql.mysql;
 
+import kr.teamcocoa.mysql.utils.SyncDetector;
 import lombok.Getter;
 
 import java.sql.Connection;
@@ -103,6 +104,7 @@ public class MySQL {
     }
 
     public PreparedStatement getPreparedStatement(String query) {
+        SyncDetector.catchSynchronousCall();
         if(isConnected()) {
             try {
                 return connection.prepareStatement(query);
@@ -115,6 +117,7 @@ public class MySQL {
     }
 
     public PreparedStatement getPreparedStatement(String query, Object... placeholders) {
+        SyncDetector.catchSynchronousCall();
         if(isConnected()) {
             try {
                 PreparedStatement preparedStatement = connection.prepareStatement(query);
@@ -131,6 +134,7 @@ public class MySQL {
     }
 
     public PreparedStatement getPreparedStatement(String query, PlaceHolder placeholders) {
+        SyncDetector.catchSynchronousCall();
         if(isConnected()) {
             try {
                 PreparedStatement preparedStatement = connection.prepareStatement(query);
