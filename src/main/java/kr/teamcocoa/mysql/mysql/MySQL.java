@@ -66,37 +66,40 @@ public class MySQL {
         }
     }
 
-    public void update(String query) {
+    public boolean update(String query) {
         if(isConnected()) {
             try(PreparedStatement preparedStatement = getPreparedStatement(query)) {
-                preparedStatement.execute();
+                return preparedStatement.execute();
             }
             catch (SQLException e) {
                 e.printStackTrace();
             }
         }
+        return false;
     }
 
-    public void update(String query, Object... placeholders) {
+    public boolean update(String query, Object... placeholders) {
         if(isConnected()) {
             try(PreparedStatement preparedStatement = getPreparedStatement(query, placeholders)) {
-                preparedStatement.execute();
+                return preparedStatement.execute();
             }
             catch (SQLException e) {
                 e.printStackTrace();
             }
         }
+        return false;
     }
 
-    public void update(String query, PlaceHolder placeholders) {
+    public boolean update(String query, PlaceHolder placeholders) {
         if(isConnected()) {
             try(PreparedStatement preparedStatement = getPreparedStatement(query, placeholders)) {
-                preparedStatement.execute();
+                return preparedStatement.execute();
             }
             catch(SQLException e) {
                 e.printStackTrace();
             }
         }
+        return false;
     }
 
     public PreparedStatement getPreparedStatement(String query) {
