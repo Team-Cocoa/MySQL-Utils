@@ -1,6 +1,7 @@
 package kr.teamcocoa.mysql.main;
 
 import kr.teamcocoa.mysql.mysql.MySQLManager;
+import kr.teamcocoa.mysql.utils.SyncDetector;
 import lombok.Getter;
 import net.md_5.bungee.api.plugin.Plugin;
 
@@ -12,6 +13,7 @@ public class BungeeMySQLBootstrap extends Plugin {
     @Override
     public void onLoad() {
         instance = this;
+        SyncDetector.registerPrimaryThread();
     }
 
     @Override
