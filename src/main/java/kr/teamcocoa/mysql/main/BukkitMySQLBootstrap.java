@@ -1,6 +1,7 @@
 package kr.teamcocoa.mysql.main;
 
 import kr.teamcocoa.mysql.mysql.MySQLManager;
+import kr.teamcocoa.mysql.mysql.pool.ConnectionPoolManager;
 import kr.teamcocoa.mysql.utils.SyncDetector;
 import lombok.Getter;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -19,11 +20,14 @@ public class BukkitMySQLBootstrap extends JavaPlugin {
     @Override
     public void onEnable() {
         MySQLManager.startKeepAlive();
+        ConnectionPoolManager.startKeepAlive();
     }
 
     @Override
     public void onDisable() {
         MySQLManager.stopKeepAlive();
         MySQLManager.disconnectAllConnections();
+        ConnectionPoolManager.stopKeepAlive();
+        ConnectionPoolManager.disconnectAllConnections();
     }
 }

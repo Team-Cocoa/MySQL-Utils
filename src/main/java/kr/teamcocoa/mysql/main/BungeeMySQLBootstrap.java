@@ -1,6 +1,7 @@
 package kr.teamcocoa.mysql.main;
 
 import kr.teamcocoa.mysql.mysql.MySQLManager;
+import kr.teamcocoa.mysql.mysql.pool.ConnectionPoolManager;
 import kr.teamcocoa.mysql.utils.SyncDetector;
 import lombok.Getter;
 import net.md_5.bungee.api.plugin.Plugin;
@@ -19,11 +20,14 @@ public class BungeeMySQLBootstrap extends Plugin {
     @Override
     public void onEnable() {
         MySQLManager.startKeepAlive();
+        ConnectionPoolManager.startKeepAlive();
     }
 
     @Override
     public void onDisable() {
         MySQLManager.stopKeepAlive();
         MySQLManager.disconnectAllConnections();
+        ConnectionPoolManager.stopKeepAlive();
+        ConnectionPoolManager.disconnectAllConnections();
     }
 }
