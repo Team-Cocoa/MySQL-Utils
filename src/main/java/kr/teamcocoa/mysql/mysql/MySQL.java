@@ -29,8 +29,12 @@ public class MySQL {
 
     private Connection connection;
 
-    protected MySQL(String dbName) {
+    @Getter
+    private long lastTransactionStamp;
+
+    public MySQL(String dbName) {
         this.dbName = dbName;
+        this.lastTransactionStamp = System.currentTimeMillis();
     }
 
     public void connect() {
@@ -70,6 +74,7 @@ public class MySQL {
     public boolean update(String query) {
         if(isConnected()) {
             try(PreparedStatement preparedStatement = getPreparedStatement(query)) {
+                this.lastTransactionStamp = System.currentTimeMillis();
                 return preparedStatement.execute();
             }
             catch (SQLException e) {
@@ -82,6 +87,7 @@ public class MySQL {
     public boolean update(String query, Object... placeholders) {
         if(isConnected()) {
             try(PreparedStatement preparedStatement = getPreparedStatement(query, placeholders)) {
+                this.lastTransactionStamp = System.currentTimeMillis();
                 return preparedStatement.execute();
             }
             catch (SQLException e) {
@@ -94,6 +100,7 @@ public class MySQL {
     public boolean update(String query, PlaceHolder placeholders) {
         if(isConnected()) {
             try(PreparedStatement preparedStatement = getPreparedStatement(query, placeholders)) {
+                this.lastTransactionStamp = System.currentTimeMillis();
                 return preparedStatement.execute();
             }
             catch(SQLException e) {
@@ -107,6 +114,7 @@ public class MySQL {
         SyncDetector.catchSynchronousCall();
         if(isConnected()) {
             try {
+                this.lastTransactionStamp = System.currentTimeMillis();
                 return connection.prepareStatement(query);
             }
             catch (SQLException e) {
@@ -124,6 +132,7 @@ public class MySQL {
                 for (int i = 0; i < placeholders.length; i++) {
                     preparedStatement.setObject(i + 1, placeholders[i]);
                 }
+                this.lastTransactionStamp = System.currentTimeMillis();
                 return preparedStatement;
             }
             catch (SQLException e) {
@@ -142,6 +151,7 @@ public class MySQL {
                 for (int i = 0; i < placeholderList.size(); i++) {
                     preparedStatement.setObject(i + 1, placeholderList.get(i));
                 }
+                this.lastTransactionStamp = System.currentTimeMillis();
                 return preparedStatement;
             }
             catch (SQLException e) {

@@ -61,14 +61,17 @@ public class MySQLManager {
         }
         keepAliveRunning = true;
         keepAliveTask.scheduleAtFixedRate(() -> {
+            long currentTime = System.currentTimeMillis();
             for (MySQL mySQL : getAllConnections()) {
-                try(PreparedStatement preparedStatement = mySQL.getPreparedStatement("select 1");
-                    ResultSet rs = preparedStatement.executeQuery()) {
-                    System.out.println("[MySQL] KeepAlive success for " + mySQL.getDbName() + ".");
-                }
-                catch (SQLException e) {
-                    e.printStackTrace();
-                    System.out.println("[MySQL] KeepAlive failed for " + mySQL.getDbName() + ".");
+                if(currentTime - mySQL.getLastTransactionStamp() > TimeUnit.MINUTES.toMillis(30)) {
+                    try(PreparedStatement preparedStatement = mySQL.getPreparedStatement("select 1");
+                        ResultSet rs = preparedStatement.executeQuery()) {
+                        System.out.println("[MySQL] KeepAlive success for " + mySQL.getDbName() + ".");
+                    }
+                    catch (SQLException e) {
+                        e.printStackTrace();
+                        System.out.println("[MySQL] KeepAlive failed for " + mySQL.getDbName() + ".");
+                    }
                 }
             }
         }, 0, 1, TimeUnit.HOURS);
