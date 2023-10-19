@@ -82,9 +82,12 @@ public class ConnectionPool {
             CompletableFuture<MySQL> completableFuture = waitingConnectionPool.poll();
             completableFuture.complete(mySQL);
         }
+        else if(this.currentSize > this.initialSize) {
+            mysql.disconnect();
+            this.currentSize--;
+        } 
         else {
             queue.add(mySQL);
         }
     }
-
 }
