@@ -28,8 +28,8 @@ public class ConnectionPoolManager {
     @Getter
     private static boolean keepAliveRunning = false;
 
-    public static ConnectionPool createConnectionPool(String name, String dbName, int size) {
-        ConnectionPool connectionPool = new ConnectionPool(dbName, size);
+    public static ConnectionPool createConnectionPool(String name, String dbName, int initSize, int maxSize) {
+        ConnectionPool connectionPool = new ConnectionPool(dbName, initSize, maxSize);
         connectionPool.init();
         for (MySQL mySQL : connectionPool.getQueue()) {
             mySQLList.add(mySQL);

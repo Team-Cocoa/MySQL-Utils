@@ -10,25 +10,47 @@ import java.util.concurrent.*;
 
 public class ConnectionPool {
 
-    private int size;
+    private int initialSize;
+
+    private int currentSize;
+    private int maximumSize;
     private String dbName;
 
     @Getter(AccessLevel.PROTECTED)
     private Deque<MySQL> queue;
     private Queue<CompletableFuture<MySQL>> waitingConnectionPool;
 
-    protected ConnectionPool(String dbName, int size) {
+    protected ConnectionPool(String dbName, int initialSize, int maximumSize) {
         this.dbName = dbName;
-        this.size = size;
-        this.queue = new LinkedBlockingDeque<>(size);
+        this.initialSize = initialSize;
+        this.maximumSize = maximumSize;
+        this.currentSize = 0;
+        this.queue = new LinkedBlockingDeque<>(maximumSize);
         this.waitingConnectionPool = new LinkedBlockingQueue<>();
     }
 
     public void init() {
-        for (int i = 0; i < size; i++) {
-            MySQL mySQL = new MySQL(this.dbName);
-            mySQL.connect();
-            queue.add(mySQL);
+        for (int i = 0; i < initialSize; i++) {
+            registerNewConnection();
+        }
+    }
+
+    private MySQL registerNewConnection() {
+        if(currentSize >= maximumSize) {
+            throw new IllegalStateException("Queue is full! We can't add more connection.");
+        }
+        MySQL mySQL = new MySQL(this.dbName);
+        mySQL.connect();
+        queue.add(mySQL);
+        this.currentSize++;
+        checkWaitingConnection(mySQL);
+        return mySQL;
+    }
+
+    private void checkWaitingConnection(MySQL mySQL) {
+        if(!waitingConnectionPool.isEmpty()) {
+            CompletableFuture<MySQL> completableFuture = waitingConnectionPool.poll();
+            completableFuture.complete(mySQL);
         }
     }
 
@@ -41,6 +63,9 @@ public class ConnectionPool {
             try {
                 CompletableFuture<MySQL> future = new CompletableFuture<>();
                 waitingConnectionPool.add(future);
+                if(currentSize >= maximumSize) {
+                    registerNewConnection();
+                }
                 return future.get();
             }
             catch (Exception e) {
