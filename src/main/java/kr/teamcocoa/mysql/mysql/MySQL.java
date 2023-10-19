@@ -10,6 +10,7 @@ import java.sql.SQLException;
 import java.text.MessageFormat;
 import java.util.List;
 
+@Getter
 public class MySQL {
 
     private static String host = "localhost";
@@ -24,12 +25,8 @@ public class MySQL {
         return DriverManager.getConnection(MessageFormat.format("jdbc:mysql://{0}:{1}/{2}", host, port, dbName), user, password);
     }
 
-    @Getter
     private String dbName;
-
     private Connection connection;
-
-    @Getter
     private long lastTransactionStamp;
 
     public MySQL(String dbName) {
