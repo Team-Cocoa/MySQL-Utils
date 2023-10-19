@@ -83,7 +83,7 @@ public class ConnectionPool {
             completableFuture.complete(mySQL);
         }
         else if(this.currentSize > this.initialSize) {
-            mysql.disconnect();
+            mySQL.disconnect();
             this.currentSize--;
         } 
         else {
