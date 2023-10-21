@@ -15,6 +15,7 @@ public class ConnectionPool {
 
     private int initialSize;
 
+    @Getter
     private int currentSize;
     private int maximumSize;
     private String dbName;
@@ -104,7 +105,7 @@ public class ConnectionPool {
             completableFuture.complete(mySQL);
         }
         else if(this.currentSize > this.initialSize) {
-
+            removeConnection(mySQL);
         } 
         else {
             queue.add(mySQL);
