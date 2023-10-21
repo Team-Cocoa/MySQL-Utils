@@ -23,17 +23,12 @@ public class ConnectionPoolManager {
 
     private static ConcurrentHashMap<String, ConnectionPool> connectionPoolMap = new ConcurrentHashMap<>();
 
-    private static List<MySQL> mySQLList = new LinkedList<>();
-
     @Getter
     private static boolean keepAliveRunning = false;
 
     public static ConnectionPool createConnectionPool(String name, String dbName, int initSize, int maxSize) {
         ConnectionPool connectionPool = new ConnectionPool(dbName, initSize, maxSize);
         connectionPool.init();
-        for (MySQL mySQL : connectionPool.getQueue()) {
-            mySQLList.add(mySQL);
-        }
         connectionPoolMap.put(name, connectionPool);
         return connectionPool;
     }
@@ -51,8 +46,10 @@ public class ConnectionPoolManager {
     }
 
     public static void disconnectAllConnections() {
-        for (MySQL mySQL : mySQLList) {
-            mySQL.disconnect();
+        for (ConnectionPool connectionPool : connectionPoolMap.values()) {
+            for (MySQL connection : connectionPool.getConnections()) {
+                connection.disconnect();
+            }
         }
     }
 
@@ -63,15 +60,17 @@ public class ConnectionPoolManager {
         keepAliveRunning = true;
         keepAliveTask.scheduleAtFixedRate(() -> {
             long currentTime = System.currentTimeMillis();
-            for (MySQL mySQL : mySQLList) {
-                if(currentTime - mySQL.getLastTransactionStamp() > TimeUnit.MINUTES.toMillis(30)) {
-                    try(PreparedStatement preparedStatement = mySQL.getPreparedStatement("select 1");
-                        ResultSet rs = preparedStatement.executeQuery()) {
-                        System.out.println("[MySQL] KeepAlive success for " + mySQL.getDbName() + ".");
-                    }
-                    catch (SQLException e) {
-                        e.printStackTrace();
-                        System.out.println("[MySQL] KeepAlive failed for " + mySQL.getDbName() + ".");
+            for (ConnectionPool connectionPool : connectionPoolMap.values()) {
+                for (MySQL connection : connectionPool.getConnections()) {
+                    if(currentTime - connection.getLastTransactionStamp() > TimeUnit.MINUTES.toMillis(30)) {
+                        try(PreparedStatement preparedStatement = connection.getPreparedStatement("select 1");
+                            ResultSet rs = preparedStatement.executeQuery()) {
+                            System.out.println("[MySQL] KeepAlive success for " + connection.getDbName() + ".");
+                        }
+                        catch (SQLException e) {
+                            e.printStackTrace();
+                            System.out.println("[MySQL] KeepAlive failed for " + connection.getDbName() + ".");
+                        }
                     }
                 }
             }

@@ -4,9 +4,12 @@ import kr.teamcocoa.mysql.mysql.MySQL;
 import lombok.AccessLevel;
 import lombok.Getter;
 
+import java.util.ArrayList;
 import java.util.Deque;
 import java.util.Queue;
-import java.util.concurrent.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.LinkedBlockingQueue;
 
 public class ConnectionPool {
 
@@ -17,7 +20,11 @@ public class ConnectionPool {
     private String dbName;
 
     @Getter(AccessLevel.PROTECTED)
+    private ArrayList<MySQL> connections;
+
+    @Getter(AccessLevel.PROTECTED)
     private Deque<MySQL> queue;
+
     private Queue<CompletableFuture<MySQL>> waitingConnectionPool;
 
     protected ConnectionPool(String dbName, int initialSize, int maximumSize) {
@@ -26,6 +33,7 @@ public class ConnectionPool {
         this.maximumSize = maximumSize;
         this.currentSize = 0;
         this.queue = new LinkedBlockingDeque<>(maximumSize);
+        this.connections = new ArrayList<>(maximumSize);
         this.waitingConnectionPool = new LinkedBlockingQueue<>();
     }
 
@@ -42,9 +50,22 @@ public class ConnectionPool {
         MySQL mySQL = new MySQL(this.dbName);
         mySQL.connect();
         queue.add(mySQL);
+        connections.add(mySQL);
         this.currentSize++;
         checkWaitingConnection(mySQL);
         return mySQL;
+    }
+
+    private void removeConnection(MySQL mySQL) {
+        if(currentSize <= initialSize) {
+            throw new IllegalStateException("We can't remove more connection.");
+        }
+        if(!connections.contains(mySQL)) {
+            throw new IllegalStateException("This connection isn't part of this pool!");
+        }
+        connections.remove(mySQL);
+        mySQL.disconnect();
+        this.currentSize--;
     }
 
     private void checkWaitingConnection(MySQL mySQL) {
@@ -83,8 +104,7 @@ public class ConnectionPool {
             completableFuture.complete(mySQL);
         }
         else if(this.currentSize > this.initialSize) {
-            mySQL.disconnect();
-            this.currentSize--;
+
         } 
         else {
             queue.add(mySQL);
