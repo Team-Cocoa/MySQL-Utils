@@ -1,13 +1,19 @@
 package kr.teamcocoa.mysql;
 
+import kr.teamcocoa.mysql.mysql.MySQL;
 import kr.teamcocoa.mysql.mysql.pool.ConnectionPool;
 import kr.teamcocoa.mysql.mysql.pool.ConnectionPoolManager;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
+import java.util.LinkedList;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @DisplayName("커넥션 풀 테스트")
 class ConnectionPoolTest {
@@ -19,11 +25,10 @@ class ConnectionPoolTest {
      */
 
     private static ConnectionPool connectionPool;
-    private static String dbName;
+    private static String dbName = "freefight";
 
-    @BeforeAll
-    static void 테스트_준비() {
-        dbName = "freefight";
+    @BeforeEach
+    void 테스트_준비() {
         connectionPool = ConnectionPoolManager.createConnectionPool(
                 "testPool",
                 dbName,
@@ -32,21 +37,55 @@ class ConnectionPoolTest {
         );
     }
 
-    @Test
-    @DisplayName("큐 작동 테스트")
-    void 큐_작동_테스트() {
-        assertEquals(0, 0);
-    }
-
-    @Test
-    @DisplayName("더미")
-    void ㅁㄴㅇㄹ() {
-        assertEquals(0, 0);
-    }
-
-    @AfterAll
-    static void 테스트_종료() {
+    @AfterEach
+    void 테스트_종료() {
         ConnectionPoolManager.disconnectAllConnections();
+        ConnectionPoolManager.removePool("testPool");
+    }
+
+    @Test
+    @DisplayName("큐 사이즈 테스트")
+    void 큐_사이즈_테스트() {
+        LinkedList<MySQL> list = new LinkedList<>();
+        for (int i = 0; i < 6; i++) {
+            list.add(connectionPool.getConnection());
+        }
+
+        assertEquals(6, connectionPool.getCurrentSize());
+
+        for (int i = 0; i < 4; i++) {
+            list.add(connectionPool.getConnection());
+        }
+
+        assertEquals(10, connectionPool.getCurrentSize());
+
+        for (int i = 0; i < 6; i++) {
+            MySQL mySQL = list.poll();
+            connectionPool.returnConnection(mySQL);
+        }
+
+        assertEquals(9, connectionPool.getCurrentSize());
+
+    }
+
+    @Test
+    @DisplayName("큐 대기시간 테스트")
+    void 큐_대기시간_테스트() {
+        LinkedList<MySQL> list = new LinkedList<>();
+        for (int i = 0; i < 10; i++) {
+            list.add(connectionPool.getConnection());
+        }
+
+        long timestamp = System.currentTimeMillis();
+
+        Executors.newSingleThreadScheduledExecutor().schedule(() -> {
+            MySQL mySQL = list.poll();
+            connectionPool.returnConnection(mySQL);
+        }, 1, TimeUnit.SECONDS);
+
+        list.add(connectionPool.getConnection());
+
+        assertTrue(System.currentTimeMillis() - timestamp >= 1000);
     }
 
 }
