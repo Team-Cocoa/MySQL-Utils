@@ -15,8 +15,6 @@ public class ConnectionPool {
 
     private int initialSize;
 
-    @Getter
-    private int currentSize;
     private int maximumSize;
     private String dbName;
 
@@ -32,7 +30,6 @@ public class ConnectionPool {
         this.dbName = dbName;
         this.initialSize = initialSize;
         this.maximumSize = maximumSize;
-        this.currentSize = 0;
         this.queue = new LinkedBlockingDeque<>(maximumSize);
         this.connections = new ArrayList<>(maximumSize);
         this.waitingConnectionPool = new LinkedBlockingQueue<>();
@@ -44,21 +41,28 @@ public class ConnectionPool {
         }
     }
 
+    public int getCurrentSize() {
+        return connections.size();
+    }
+
     private MySQL registerNewConnection() {
-        if(currentSize >= maximumSize) {
+        if(connections.size() >= maximumSize) {
             throw new IllegalStateException("Queue is full! We can't add more connection.");
         }
         MySQL mySQL = new MySQL(this.dbName);
         mySQL.connect();
-        queue.add(mySQL);
         connections.add(mySQL);
-        this.currentSize++;
-        checkWaitingConnection(mySQL);
+        if(waitingConnectionPool.isEmpty()) {
+            queue.add(mySQL);
+        }
+        else {
+            checkWaitingConnection(mySQL);
+        }
         return mySQL;
     }
 
     private void removeConnection(MySQL mySQL) {
-        if(currentSize <= initialSize) {
+        if(connections.size() <= initialSize) {
             throw new IllegalStateException("We can't remove more connection.");
         }
         if(!connections.contains(mySQL)) {
@@ -66,7 +70,6 @@ public class ConnectionPool {
         }
         connections.remove(mySQL);
         mySQL.disconnect();
-        this.currentSize--;
     }
 
     private void checkWaitingConnection(MySQL mySQL) {
@@ -85,7 +88,7 @@ public class ConnectionPool {
             try {
                 CompletableFuture<MySQL> future = new CompletableFuture<>();
                 waitingConnectionPool.add(future);
-                if(currentSize >= maximumSize) {
+                if(connections.size() < maximumSize) {
                     registerNewConnection();
                 }
                 return future.get();
@@ -100,15 +103,18 @@ public class ConnectionPool {
     }
 
     public void returnConnection(MySQL mySQL) {
+        if(queue.contains(mySQL)) {
+            throw new IllegalStateException("This connection is already in pool!");
+        }
         if(!waitingConnectionPool.isEmpty()) {
             CompletableFuture<MySQL> completableFuture = waitingConnectionPool.poll();
             completableFuture.complete(mySQL);
         }
-        else if(this.currentSize > this.initialSize) {
-            removeConnection(mySQL);
-        } 
         else {
             queue.add(mySQL);
+            if(queue.size() > this.initialSize) {
+                removeConnection(mySQL);
+            }
         }
     }
 }
