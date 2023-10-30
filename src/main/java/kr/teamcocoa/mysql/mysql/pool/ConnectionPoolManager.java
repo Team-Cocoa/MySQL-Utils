@@ -33,6 +33,10 @@ public class ConnectionPoolManager {
         return connectionPool;
     }
 
+    public static void removePool(String name) {
+        connectionPoolMap.remove(name);
+    }
+
     public static boolean hasPool(String name) {
         return connectionPoolMap.containsKey(name);
     }
