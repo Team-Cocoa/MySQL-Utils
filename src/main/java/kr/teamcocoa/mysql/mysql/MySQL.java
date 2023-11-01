@@ -1,5 +1,6 @@
 package kr.teamcocoa.mysql.mysql;
 
+import kr.teamcocoa.mysql.mysql.pool.ConnectionPool;
 import kr.teamcocoa.mysql.utils.SyncDetector;
 import lombok.Getter;
 
@@ -27,10 +28,19 @@ public class MySQL {
 
     private String dbName;
     private Connection connection;
+
+    @Getter
+    private ConnectionPool relatedPool;
+
     private long lastTransactionStamp;
 
     public MySQL(String dbName) {
+        this(dbName, null);
+    }
+
+    public MySQL(String dbName, ConnectionPool relatedPool) {
         this.dbName = dbName;
+        this.relatedPool = relatedPool;
         this.lastTransactionStamp = System.currentTimeMillis();
     }
 

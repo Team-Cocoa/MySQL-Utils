@@ -49,7 +49,7 @@ public class ConnectionPool {
         if(connections.size() >= maximumSize) {
             throw new IllegalStateException("Queue is full! We can't add more connection.");
         }
-        MySQL mySQL = new MySQL(this.dbName);
+        MySQL mySQL = new MySQL(this.dbName, this);
         mySQL.connect();
         connections.add(mySQL);
         if(waitingConnectionPool.isEmpty()) {
@@ -62,7 +62,7 @@ public class ConnectionPool {
     }
 
     private void removeConnection(MySQL mySQL) {
-        if(connections.size() <= initialSize) {
+        if(mySQL.isConnected() && connections.size() <= initialSize) {
             throw new IllegalStateException("We can't remove more connection.");
         }
         if(!connections.contains(mySQL)) {
@@ -103,6 +103,16 @@ public class ConnectionPool {
     }
 
     public void returnConnection(MySQL mySQL) {
+        if(mySQL.getRelatedPool() != this) {
+            throw new IllegalArgumentException("This connection isn't related with this pool!");
+        }
+        if(!mySQL.isConnected()) {
+            removeConnection(mySQL);
+            if(queue.size() < this.initialSize) {
+                registerNewConnection();
+            }
+            return;
+        }
         if(queue.contains(mySQL)) {
             throw new IllegalStateException("This connection is already in pool!");
         }

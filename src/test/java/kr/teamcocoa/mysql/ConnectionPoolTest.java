@@ -1,6 +1,7 @@
 package kr.teamcocoa.mysql;
 
 import kr.teamcocoa.mysql.mysql.MySQL;
+import kr.teamcocoa.mysql.mysql.MySQLManager;
 import kr.teamcocoa.mysql.mysql.pool.ConnectionPool;
 import kr.teamcocoa.mysql.mysql.pool.ConnectionPoolManager;
 import org.junit.jupiter.api.AfterEach;
@@ -12,8 +13,7 @@ import java.util.LinkedList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 @DisplayName("커넥션 풀 테스트")
 class ConnectionPoolTest {
@@ -86,6 +86,25 @@ class ConnectionPoolTest {
         list.add(connectionPool.getConnection());
 
         assertTrue(System.currentTimeMillis() - timestamp >= 1000);
+    }
+
+    @Test
+    @DisplayName("커넥션 연결 관계 테스트")
+    void 커넥션_연결_관계_테스트() {
+        MySQL newMySQL = MySQLManager.createConnection("freefight");
+
+        MySQL mySQL = connectionPool.getConnection();
+        mySQL.disconnect();
+
+        assertThrows(IllegalArgumentException.class, () -> {
+            connectionPool.returnConnection(newMySQL);
+        });
+
+        connectionPool.returnConnection(mySQL);
+
+        assertEquals(5, connectionPool.getCurrentSize());
+
+        newMySQL.disconnect();
     }
 
 }
